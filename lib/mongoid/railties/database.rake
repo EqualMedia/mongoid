@@ -59,22 +59,10 @@ namespace :db do
   end
 
   namespace :mongoid do
-    # gets a list of the mongoid models defined in the app/models directory
+    # gets a list of the mongoid model classes
     def get_mongoid_models
-      documents = []
-      Dir.glob("app/models/**/*.rb").sort.each do |file|
-        model_path = file[0..-4].split('/')[2..-1]
-        begin
-          klass = model_path.map(&:classify).join('::').constantize
-          if klass.ancestors.include?(Mongoid::Document) && !klass.embedded
-            documents << klass
-          end
-        rescue => e
-          # Just for non-mongoid objects that dont have the embedded
-          # attribute at the class level.
-        end
-      end
-      documents
+      Object.subclasses.select { |c| c < Mongoid::Document }.
+        map { |c| [c] + c.subclasses }.flatten.uniq.sort_by(&:name)
     end
 
     desc 'Create the indexes defined on your mongoid models'
