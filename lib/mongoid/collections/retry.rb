@@ -24,7 +24,8 @@ module Mongoid #:nodoc:
       #
       # @since 2.0.0
       def retry_on_connection_failure
-        retries = 0
+        cf_retries = 0
+        ot_retried = false
         begin
           yield
         rescue Mongo::ConnectionFailure => ex
@@ -32,6 +33,14 @@ module Mongoid #:nodoc:
           raise ex if retries > Mongoid.max_retries_on_connection_failure
           Kernel.sleep(0.5)
           retry
+        rescue Mongo::OperationTimeout => ex
+          if ot_retried
+            raise
+          else
+            ot_retried = true
+            Mongoid.logger.warn "Retrying due to Mongo::OperationTimeout"
+            retry
+          end
         end
       end
     end
