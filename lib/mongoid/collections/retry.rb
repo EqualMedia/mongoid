@@ -29,8 +29,8 @@ module Mongoid #:nodoc:
         begin
           yield
         rescue Mongo::ConnectionFailure => ex
-          retries += 1
-          raise ex if retries > Mongoid.max_retries_on_connection_failure
+          cf_retries += 1
+          raise ex if cf_retries > Mongoid.max_retries_on_connection_failure
           Kernel.sleep(0.5)
           retry
         rescue Mongo::OperationTimeout => ex
